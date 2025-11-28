@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethereal Vibes - Idle Clicker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Quicksand:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="background-container">
+        <div class="particles"></div>
+        <div class="gradient-orbs"></div>
+    </div>
+
+    <div class="app-wrapper">
+        <!-- Top Navigation -->
+        <nav class="top-nav glass-morph">
+            <div class="nav-left">
+                <span class="logo">✨ Ethereal Vibes</span>
+                <span class="season-indicator" id="season-indicator">🌸 Spring</span>
+            </div>
+            <div class="nav-right">
+                <button class="nav-btn" id="events-btn" title="Events">📅</button>
+                <button class="nav-btn" id="settings-btn" title="Settings">⚙️</button>
+                <button class="nav-btn" id="stats-btn" title="Statistics">📊</button>
+            </div>
+        </nav>
+
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Left Sidebar -->
+            <aside class="sidebar left-sidebar glass-morph">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="achievements">🏆</button>
+                    <button class="tab-btn" data-tab="pet">🐾</button>
+                    <button class="tab-btn" data-tab="crafting">🔨</button>
+                </div>
+
+                <div class="tab-content" id="achievements-tab">
+                    <h3>Achievements</h3>
+                    <div class="achievement-count" id="achievement-count">0/15</div>
+                    <div class="scroll-content" id="achievements-list"></div>
+                </div>
+
+                <div class="tab-content hidden" id="pet-tab">
+                    <h3>Pet Companion</h3>
+                    <div class="pet-display" id="pet-display">
+                        <div class="pet-avatar" id="pet-avatar">🥚</div>
+                        <div class="pet-name" id="pet-name">Egg</div>
+                        <div class="pet-level">Level <span id="pet-level">1</span></div>
+                        <div class="pet-exp-text" id="pet-exp-text"
+                            style="font-size: 0.9rem; margin: 5px 0; color: var(--text-secondary);">EXP: 0 / 100</div>
+                        <div class="pet-exp-bar">
+                            <div class="pet-exp-fill" id="pet-exp-fill"></div>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+                            <button class="btn-small" id="pet-feed-btn">Feed (100 💖)</button>
+                            <button class="btn-small" id="pet-play-btn">Play (Free)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content hidden" id="crafting-tab">
+                    <h3>Crafting</h3>
+                    <div class="scroll-content" id="crafting-list"></div>
+                </div>
+            </aside>
+
+            <!-- Center Area -->
+            <main class="center-area">
+                <!-- Stats Panel -->
+                <div class="stats-panel glass-morph">
+                    <div class="stat-group">
+                        <div class="stat-label">Vibes</div>
+                        <div class="stat-value" id="vibes-count">0</div>
+                    </div>
+                    <div class="stat-group">
+                        <div class="stat-label">Per Second</div>
+                        <div class="stat-value" id="vibes-per-second">0</div>
+                    </div>
+                    <div class="stat-group">
+                        <div class="stat-label">Star Dust ✨</div>
+                        <div class="stat-value" id="star-dust">0</div>
+                    </div>
+                </div>
+
+                <!-- Combo Indicator -->
+                <div class="combo-indicator" id="combo-indicator">
+                    <div class="combo-text">Combo: <span id="combo-value">1.0x</span></div>
+                    <div class="combo-bar-container">
+                        <div class="combo-bar" id="combo-bar"></div>
+                    </div>
+                </div>
+
+                <!-- Heart Container -->
+                <div class="heart-container" id="heart-container">
+                    <button class="heart-btn" id="heart-btn">
+                        <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                    </button>
+                    <div id="floating-container"></div>
+                </div>
+
+                <!-- Frenzy Indicator -->
+                <div class="frenzy-indicator hidden" id="frenzy-indicator">
+                    <span class="frenzy-icon">⚡</span>
+                    <span class="frenzy-text">FRENZY MODE!</span>
+                    <span class="frenzy-timer" id="frenzy-timer">10s</span>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="action-btn glass-morph" id="minigame-btn">🎮 Mini-Game</button>
+                    <button class="action-btn glass-morph" id="prestige-btn">✨ Ascend</button>
+                </div>
+            </main>
+
+            <!-- Right Sidebar -->
+            <aside class="sidebar right-sidebar glass-morph">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="upgrades">📈</button>
+                    <button class="tab-btn" data-tab="skills">🌟</button>
+                    <button class="tab-btn" data-tab="inventory">🎒</button>
+                </div>
+
+                <div class="tab-content" id="upgrades-tab">
+                    <h3>Upgrades</h3>
+                    <div class="scroll-content" id="upgrades-list"></div>
+                </div>
+
+                <div class="tab-content hidden" id="skills-tab">
+                    <h3>Constellations</h3>
+                    <div class="scroll-content" id="skills-tree"></div>
+                </div>
+
+                <div class="tab-content hidden" id="inventory-tab">
+                    <h3>Charms</h3>
+                    <div class="equipment-slots" id="equipment-slots"></div>
+                    <h4 style="margin-top: 15px;">Inventory</h4>
+                    <div class="scroll-content" id="inventory-list"></div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Info Bar -->
+        <div class="info-bar glass-morph">
+            <div class="info-item">
+                <span class="info-label">Event:</span>
+                <span class="info-value" id="current-event">None Active</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Prestige Lvl:</span>
+                <span class="info-value" id="prestige-level">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Pet Bonus:</span>
+                <span class="info-value" id="pet-bonus">+0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="stats-modal" class="modal hidden">
+        <div class="modal-content glass-morph">
+            <span class="modal-close">&times;</span>
+            <h2>Statistics</h2>
+            <div id="stats-grid"></div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content glass-morph">
+            <span class="modal-close">&times;</span>
+            <h2>Settings</h2>
+            <div class="settings-grid">
+                <label><input type="checkbox" id="sound-toggle" checked> Sound Effects</label>
+                <label><input type="checkbox" id="particles-toggle" checked> Particles</label>
+                <label><input type="checkbox" id="autosave-toggle" checked> Auto-Save</label>
+                <button class="btn" id="export-btn">Export Save</button>
+                <button class="btn" id="import-btn">Import Save</button>
+                <button class="btn btn-danger" id="reset-btn">Hard Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="events-modal" class="modal hidden">
+        <div class="modal-content glass-morph">
+            <span class="modal-close">&times;</span>
+            <h2>Events Calendar</h2>
+            <div id="events-list"></div>
+        </div>
+    </div>
+
+    <div id="minigame-modal" class="modal hidden">
+        <div class="modal-content glass-morph minigame-content">
+            <span class="modal-close">&times;</span>
+            <h2>Match the Affirmations!</h2>
+            <div class="minigame-board" id="minigame-board"></div>
+            <div class="minigame-info">
+                <span>Matches: <span id="minigame-score">0</span>/8</span>
+                <span>Time: <span id="minigame-timer">60</span>s</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="prestige-modal" class="modal hidden">
+        <div class="modal-content glass-morph">
+            <span class="modal-close">&times;</span>
+            <h2>✨ Ascension ✨</h2>
+            <p>Reset your progress to gain Star Dust and unlock new powers!</p>
+            <div class="prestige-info">
+                <div>Star Dust to Gain: <strong id="prestige-reward">0</strong></div>
+                <div>Current Multiplier: <strong id="current-multiplier">1.0x</strong></div>
+            </div>
+            <button class="btn btn-large" id="confirm-prestige-btn">Ascend Now</button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Daily Reward Modal -->
+    <div id="daily-reward-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px;">🎁 Daily Rewards</h2>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 1.2rem; color: var(--text-secondary);">Current Streak</div>
+                <div id="daily-streak" style="font-size: 2.5rem; font-weight: 800; color: var(--accent-gold);">1 Day
+                </div>
+            </div>
+            <div class="daily-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <!-- Generated by JS -->
+            </div>
+            <button id="claim-reward-btn" class="btn-large" style="width: 100%; margin-top: 20px;">Claim Reward</button>
+        </div>
+    </div>
+
+    <!-- Offline Progress Modal -->
+    <div id="offline-modal" class="modal hidden">
+        <div class="modal-content" style="text-align: center;">
+            <span class="modal-close">&times;</span>
+            <h2>💤 Welcome Back!</h2>
+            <p style="margin: 15px 0; color: var(--text-secondary);">You were away for a while. Here's what your vibes
+                produced:</p>
+            <div id="offline-gains"
+                style="font-size: 2.5rem; font-weight: 800; color: var(--accent-purple); margin: 20px 0;">0 Vibes</div>
+            <button class="btn-large"
+                onclick="document.getElementById('offline-modal').classList.add('hidden')">Awesome!</button>
+        </div>
+    </div>
+
+    <script src="sounds.js"></script>
+    <script src="skills.js"></script>
+    <script src="inventory.js"></script>
+    <script src="game.js"></script>
+</body>
+
+</html>
