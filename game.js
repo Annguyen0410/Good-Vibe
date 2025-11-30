@@ -206,7 +206,7 @@ const achievements = [
     { id: 'frenzy', name: 'Frenzy!', desc: 'Activate frenzy mode', icon: '🌟', check: () => gameState.frenzy.active || gameState.events.history.includes('frenzy') },
     { id: 'ascended', name: 'Ascended', desc: 'Prestige once', icon: '✨', check: () => gameState.prestigeLevel >= 1 },
     { id: 'charmed', name: 'Charmed', desc: 'Find a charm', icon: '🍀', check: () => inventoryManager && inventoryManager.inventory.length > 0 },
-    { id: 'pet_master', name: 'Pet Master', desc: 'Max pet level', icon: '🐾', check: () => gameState.pet.stage === 'legendary' },
+    { id: 'pet_master', name: 'Pet Master', desc: 'Max pet level', icon: '🐾', check: () => getCurrentPet().stage === 'legendary' },
     { id: 'craftsman', name: 'Craftsman', desc: 'Craft an item', icon: '🔨', check: () => gameState.materials.crystals >= 1 },
     { id: 'first_prestige', name: 'Ascension Novice', desc: 'Prestige for the first time', icon: '✨', check: () => gameState.prestigeLevel >= 1 },
     { id: 'daily_dedication', name: 'Daily Dedication', desc: 'Claim 7 daily rewards in a row', icon: '📅', check: () => gameState.dailyReward.streak >= 7 },
@@ -214,8 +214,8 @@ const achievements = [
     { id: 'automation', name: 'Automation Expert', desc: 'Have 100+ total upgrades', icon: '🤖', check: () => getTotalUpgrades() >= 100 },
     { id: 'combo_king', name: 'Combo King', desc: 'Reach a 5x combo multiplier', icon: '🔥', check: () => gameState.combo.maxMultiplier >= 5 },
     { id: 'frenzy_master', name: 'Frenzy Master', desc: 'Activate frenzy mode 50 times', icon: '⚡', check: () => gameState.events.history.filter(e => e === 'frenzy').length >= 50 },
-    { id: 'pet_lover', name: 'Pet Lover', desc: 'Feed your pet 100 times', icon: '🐾', check: () => gameState.pet.fedCount >= 100 },
-    { id: 'legendary_tamer', name: 'Legendary Tamer', desc: 'Evolve pet to Legendary', icon: '🦄', check: () => gameState.pet.stage === 'legendary' },
+    { id: 'pet_lover', name: 'Pet Lover', desc: 'Feed your pet 100 times', icon: '🐾', check: () => getCurrentPet().fedCount >= 100 },
+    { id: 'legendary_tamer', name: 'Legendary Tamer', desc: 'Evolve pet to Legendary', icon: '🦄', check: () => getCurrentPet().stage === 'legendary' },
     { id: 'charm_collector', name: 'Charm Collector', desc: 'Collect 20 different charms', icon: '💎', check: () => inventoryManager && inventoryManager.inventory.length >= 20 },
     { id: 'rare_find', name: 'Rare Find', desc: 'Find a legendary charm', icon: '🏆', check: () => inventoryManager && inventoryManager.inventory.some(c => c.rarity === 'legendary') },
     { id: 'skill_master', name: 'Skill Master', desc: 'Unlock all constellation skills', icon: '⭐', check: () => skillManager && skillManager.unlockedSkills.length >= Object.keys(skillManager.skillTree).length },
@@ -316,11 +316,36 @@ const petTypes = {
 // For backward compatibility - default to bird
 let petStages = petTypes.bird.stages;
 
+// Helper function to get current pet
+function getCurrentPet() {
+    if (!gameState.pets[gameState.currentPet]) {
+        // Initialize if missing
+        gameState.pets[gameState.currentPet] = { level: 1, exp: 0, stage: 'egg', fedCount: 0, lastPlayed: 0 };
+    }
+    return gameState.pets[gameState.currentPet];
+}
+
+// Helper function to get current pet stages
+function getCurrentPetStages() {
+    return petTypes[gameState.currentPet].stages;
+}
+
 // Crafting Recipes
 const craftingRecipes = [
     { id: 'essence_boost', name: "Essence Boost", cost: { essence: 10 }, effect: () => { gameState.vibes += gameState.vibesPerSecond * 3600; showToast("🌟 +1 hour of production!"); } },
     { id: 'lucky_charm', name: "Lucky Charm", cost: { fragments: 5, essence: 20 }, effect: () => { inventoryManager.addCharm('luckyClover'); showToast("🍀 Crafted Lucky Charm!"); } },
     { id: 'stardust_gem', name: "StarDust Gem", cost: { crystals: 1, fragments: 10 }, effect: () => { gameState.starDust += 5; showToast("✨ +5 Star Dust!"); } }
+];
+
+// Daily Rewards Configuration
+const dailyRewards = [
+    { type: 'vibes', value: 1000, icon: '✨', buff: { type: 'production', value: 1.1, desc: '+10% Production (4h)' } },
+    { type: 'essence', value: 50, icon: '💧', buff: { type: 'click', value: 1.05, desc: '+5% Click Value (4h)' } },
+    { type: 'charm', rarity: 'common', icon: '🍀', buff: { type: 'crit', value: 0.05, desc: '+5% Crit Chance (4h)' } },
+    { type: 'vibes', value: 5000, icon: '✨', buff: { type: 'production', value: 1.2, desc: '+20% Production (4h)' } },
+    { type: 'fragments', value: 100, icon: '💎', buff: { type: 'click', value: 1.1, desc: '+10% Click Value (4h)' } },
+    { type: 'charm', rarity: 'rare', icon: '🧿', buff: { type: 'crit', value: 0.1, desc: '+10% Crit Chance (4h)' } },
+    { type: 'stardust', value: 10, icon: '⭐', buff: { type: 'production', value: 1.5, desc: '+50% Production (4h)' } }
 ];
 
 // DOM Elements
@@ -353,6 +378,12 @@ const els = {
 // Initialize
 function init() {
     loadGame();
+    // Ensure current pet exists
+    if (!gameState.pets[gameState.currentPet]) {
+        gameState.pets[gameState.currentPet] = { level: 1, exp: 0, stage: 'egg', fedCount: 0, lastPlayed: 0 };
+    }
+    // Update petStages to match current pet
+    petStages = getCurrentPetStages();
     setupEventListeners();
     calculateVPS();
     updateModifiers();
@@ -433,6 +464,20 @@ function setupEventListeners() {
         gameState.settings.sound = e.target.checked;
         soundSystem.toggle(e.target.checked);
     });
+
+    // Daily Reward Claim Button
+    const claimRewardBtn = document.getElementById('claim-reward-btn');
+    if (claimRewardBtn) {
+        claimRewardBtn.addEventListener('click', () => {
+            const currentDay = gameState.dailyReward.day;
+            const currentReward = dailyRewards[currentDay - 1];
+            if (currentReward) {
+                claimDailyReward(currentReward);
+            } else {
+                showToast("❌ No reward available for today!");
+            }
+        });
+    }
 }
 
 function setupModal(btnId, modalId, onOpen) {
@@ -511,7 +556,7 @@ function handleHeartClick(e) {
     // Pet exp (only from manual clicks, not auto-clicks)
     if (!e.isAuto) {
         const expGain = Math.floor(totalValue / 10) * (gameState.events.active === 'exp_boost' ? 2 : 1);
-        gameState.pet.exp += expGain;
+        getCurrentPet().exp += expGain;
         checkPetLevelUp();
     }
 
@@ -587,12 +632,13 @@ function activateFrenzy() {
 
 // Pet System
 function feedPet() {
-    const feedCost = 100 + (gameState.pet.level * 10);
+    const pet = getCurrentPet();
+    const feedCost = 100 + (pet.level * 10);
     if (gameState.vibes >= feedCost) {
         gameState.vibes -= feedCost;
         const expGain = 50 * (gameState.events.active === 'exp_boost' ? 2 : 1);
-        gameState.pet.exp += expGain;
-        gameState.pet.fedCount++;
+        pet.exp += expGain;
+        pet.fedCount++;
         checkPetLevelUp();
         updateDisplay();
         renderPet(); // Update pet display after feeding
@@ -604,38 +650,40 @@ function feedPet() {
 }
 
 function checkPetLevelUp() {
-    let currentStage = petStages[gameState.pet.stage];
+    const pet = getCurrentPet();
+    const petStages = getCurrentPetStages();
+    let currentStage = petStages[pet.stage];
     let leveledUp = false;
 
     // Check if we have enough exp to level up within current stage
-    while (gameState.pet.exp >= currentStage.expNeeded && currentStage.expNeeded !== Infinity) {
-        gameState.pet.exp -= currentStage.expNeeded;
-        gameState.pet.level++;
+    while (pet.exp >= currentStage.expNeeded && currentStage.expNeeded !== Infinity) {
+        pet.exp -= currentStage.expNeeded;
+        pet.level++;
         leveledUp = true;
 
         // Check if we should evolve to next stage
         const stages = Object.keys(petStages);
-        const currentIndex = stages.indexOf(gameState.pet.stage);
+        const currentIndex = stages.indexOf(pet.stage);
 
         // Evolution happens at specific level thresholds
         if (currentIndex < stages.length - 1) {
             const nextStage = petStages[stages[currentIndex + 1]];
             // Evolve when reaching the exp requirement for next stage
-            if (gameState.pet.level >= getLevelForStage(stages[currentIndex + 1])) {
+            if (pet.level >= getLevelForStage(stages[currentIndex + 1])) {
                 evolvePet();
-                currentStage = petStages[gameState.pet.stage];
+                currentStage = petStages[pet.stage];
             }
         }
     }
 
     if (leveledUp) {
-        showToast(`🎉 Pet leveled up to ${gameState.pet.level}!`);
+        showToast(`🎉 Pet leveled up to ${pet.level}!`);
         updateModifiers();
     }
 
     // Update exp bar visual
     const expNeeded = currentStage.expNeeded === Infinity ? 10000 : currentStage.expNeeded;
-    const pct = Math.min((gameState.pet.exp / expNeeded) * 100, 100);
+    const pct = Math.min((pet.exp / expNeeded) * 100, 100);
     els.petExpFill.style.width = `${pct}%`;
     renderPet();
 }
@@ -652,11 +700,13 @@ function getLevelForStage(stage) {
 }
 
 function evolvePet() {
+    const pet = getCurrentPet();
+    const petStages = getCurrentPetStages();
     const stages = Object.keys(petStages);
-    const currentIndex = stages.indexOf(gameState.pet.stage);
+    const currentIndex = stages.indexOf(pet.stage);
     if (currentIndex < stages.length - 1) {
-        gameState.pet.stage = stages[currentIndex + 1];
-        const newStage = petStages[gameState.pet.stage];
+        pet.stage = stages[currentIndex + 1];
+        const newStage = petStages[pet.stage];
         showToast(`🌟 Pet evolved to ${newStage.name}!`);
         updateModifiers();
         saveGame();
@@ -664,15 +714,17 @@ function evolvePet() {
 }
 
 function renderPet() {
-    const stage = petStages[gameState.pet.stage];
+    const pet = getCurrentPet();
+    const petStages = getCurrentPetStages();
+    const stage = petStages[pet.stage];
     if (els.petAvatar) els.petAvatar.textContent = stage.icon;
     if (els.petName) els.petName.textContent = stage.name;
-    if (els.petLevel) els.petLevel.textContent = gameState.pet.level;
+    if (els.petLevel) els.petLevel.textContent = pet.level;
     if (els.petBonus) els.petBonus.textContent = `+${Math.round(gameState.modifiers.petBonus * 100)}%`;
 
     // Update exp bar visual
     const expNeeded = stage.expNeeded === Infinity ? 10000 : stage.expNeeded;
-    const pct = Math.min((gameState.pet.exp / expNeeded) * 100, 100);
+    const pct = Math.min((pet.exp / expNeeded) * 100, 100);
     if (els.petExpFill) {
         els.petExpFill.style.width = `${pct}%`;
     }
@@ -680,11 +732,11 @@ function renderPet() {
     // Update EXP text display
     const expText = document.getElementById('pet-exp-text');
     if (expText) {
-        expText.textContent = `EXP: ${Math.floor(gameState.pet.exp)} / ${expNeeded}`;
+        expText.textContent = `EXP: ${Math.floor(pet.exp)} / ${expNeeded}`;
     }
 
     // Update feed button cost based on pet level - try multiple ways to find the button
-    const feedCost = 100 + (gameState.pet.level * 10);
+    const feedCost = 100 + (pet.level * 10);
     const feedBtn = els.petFeedBtn || document.getElementById('pet-feed-btn');
     if (feedBtn) {
         feedBtn.textContent = `Feed (${feedCost} 💖)`;
@@ -771,7 +823,9 @@ function updateModifiers() {
     };
 
     // Apply pet bonus
-    const petStage = petStages[gameState.pet.stage];
+    const pet = getCurrentPet();
+    const petStages = getCurrentPetStages();
+    const petStage = petStages[pet.stage];
     gameState.modifiers.petBonus = petStage.bonus;
 
     // Apply season bonus
@@ -844,19 +898,16 @@ function checkDailyReward() {
 
 function renderDailyRewards() {
     const container = document.querySelector('.daily-grid');
+    if (!container) return;
     container.innerHTML = '';
 
-    const rewards = [
-        { type: 'vibes', value: 1000, icon: '✨', buff: { type: 'production', value: 1.1, desc: '+10% Production (4h)' } },
-        { type: 'essence', value: 50, icon: '💧', buff: { type: 'click', value: 1.05, desc: '+5% Click Value (4h)' } },
-        { type: 'charm', rarity: 'common', icon: '🍀', buff: { type: 'crit', value: 0.05, desc: '+5% Crit Chance (4h)' } },
-        { type: 'vibes', value: 5000, icon: '✨', buff: { type: 'production', value: 1.2, desc: '+20% Production (4h)' } },
-        { type: 'fragments', value: 100, icon: '💎', buff: { type: 'click', value: 1.1, desc: '+10% Click Value (4h)' } },
-        { type: 'charm', rarity: 'rare', icon: '🧿', buff: { type: 'crit', value: 0.1, desc: '+10% Crit Chance (4h)' } },
-        { type: 'stardust', value: 10, icon: '⭐', buff: { type: 'production', value: 1.5, desc: '+50% Production (4h)' } }
-    ];
+    // Update streak display
+    const streakDisplay = document.getElementById('daily-streak');
+    if (streakDisplay) {
+        streakDisplay.textContent = `${gameState.dailyReward.streak || 0} Day${(gameState.dailyReward.streak || 0) !== 1 ? 's' : ''}`;
+    }
 
-    rewards.forEach((reward, index) => {
+    dailyRewards.forEach((reward, index) => {
         const day = index + 1;
         const isCurrent = day === gameState.dailyReward.day;
         const isClaimed = day < gameState.dailyReward.day;
@@ -877,17 +928,53 @@ function renderDailyRewards() {
 
         container.appendChild(div);
     });
+
+    // Update claim button state
+    const claimBtn = document.getElementById('claim-reward-btn');
+    if (claimBtn) {
+        const currentDay = gameState.dailyReward.day;
+        const now = new Date();
+        const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+        const alreadyClaimed = gameState.dailyReward.claimedDays && gameState.dailyReward.claimedDays.includes(dayKey);
+        
+        if (alreadyClaimed) {
+            claimBtn.textContent = 'Already Claimed';
+            claimBtn.disabled = true;
+            claimBtn.style.opacity = '0.5';
+            claimBtn.style.cursor = 'not-allowed';
+        } else {
+            claimBtn.textContent = 'Claim Reward';
+            claimBtn.disabled = false;
+            claimBtn.style.opacity = '1';
+            claimBtn.style.cursor = 'pointer';
+        }
+    }
 }
 
 function claimDailyReward(reward) {
+    // Check if already claimed today
+    const now = new Date();
+    const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    
+    if (!gameState.dailyReward.claimedDays) {
+        gameState.dailyReward.claimedDays = [];
+    }
+    
+    if (gameState.dailyReward.claimedDays.includes(dayKey)) {
+        showToast("❌ You've already claimed today's reward!");
+        return;
+    }
+
     // Grant reward
     if (reward.type === 'vibes') gameState.vibes += reward.value;
     if (reward.type === 'essence') gameState.materials.essence += reward.value;
     if (reward.type === 'fragments') gameState.materials.fragments += reward.value;
     if (reward.type === 'stardust') gameState.starDust += reward.value;
     if (reward.type === 'charm') {
-        const charm = Object.keys(inventoryManager.charmTypes).find(k => inventoryManager.charmTypes[k].rarity === reward.rarity);
-        if (charm) inventoryManager.addCharm(charm);
+        if (inventoryManager) {
+            const charm = Object.keys(inventoryManager.charmTypes).find(k => inventoryManager.charmTypes[k].rarity === reward.rarity);
+            if (charm) inventoryManager.addCharm(charm);
+        }
     }
 
     // Apply Buff
@@ -901,6 +988,8 @@ function claimDailyReward(reward) {
         updateModifiers();
     }
 
+    // Mark as claimed
+    gameState.dailyReward.claimedDays.push(dayKey);
     gameState.dailyReward.lastClaim = Date.now();
     gameState.dailyReward.streak++;
     gameState.dailyReward.day++;
@@ -1418,9 +1507,9 @@ function renderStats() {
         { label: "Prestige Level", value: gameState.prestigeLevel, icon: "⭐" },
         { label: "Star Dust", value: formatNumber(gameState.starDust), icon: "✨" },
         { label: "Achievements", value: `${gameState.achievements.length}/${achievements.length}`, icon: "🏆" },
-        { label: "Pet Level", value: gameState.pet.level, icon: "🐾" },
-        { label: "Pet Stage", value: petStages[gameState.pet.stage].name, icon: petStages[gameState.pet.stage].icon },
-        { label: "Pet Fed Count", value: formatNumber(gameState.pet.fedCount), icon: "🍽️" },
+        { label: "Pet Level", value: getCurrentPet().level, icon: "🐾" },
+        { label: "Pet Stage", value: (() => { const pet = getCurrentPet(); const stages = getCurrentPetStages(); return stages[pet.stage].name; })(), icon: (() => { const pet = getCurrentPet(); const stages = getCurrentPetStages(); return stages[pet.stage].icon; })() },
+        { label: "Pet Fed Count", value: formatNumber(getCurrentPet().fedCount), icon: "🍽️" },
         { label: "Total Upgrades Owned", value: formatNumber(totalUpgrades), icon: "📈" },
         { label: "Materials Collected", value: formatNumber(totalMaterials), icon: "💎" },
         { label: "Current Season", value: `${season.icon} ${season.name}`, icon: season.icon },
@@ -1448,16 +1537,17 @@ function renderStats() {
 
 // v2.0: Pet Play System
 function playWithPet() {
+    const pet = getCurrentPet();
     const now = Date.now();
-    if (gameState.pet.lastPlayed && now - gameState.pet.lastPlayed < 60000) {
-        const remaining = Math.ceil((60000 - (now - gameState.pet.lastPlayed)) / 1000);
+    if (pet.lastPlayed && now - pet.lastPlayed < 60000) {
+        const remaining = Math.ceil((60000 - (now - pet.lastPlayed)) / 1000);
         showToast(`⏳ Pet is tired! Wait ${remaining}s`);
         return;
     }
 
-    gameState.pet.lastPlayed = now;
+    pet.lastPlayed = now;
     const expGain = 25 * (gameState.events.active === 'exp_boost' ? 2 : 1);
-    gameState.pet.exp += expGain;
+    pet.exp += expGain;
     checkPetLevelUp();
 
     // Visuals
